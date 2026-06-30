@@ -66,49 +66,48 @@ body {
 /* ─── UPLOAD OVERLAY ─── */
 #uploadOverlay {
   position:fixed;inset:0;z-index:999;
-  background: radial-gradient(ellipse at 55% 45%, rgba(34,197,94,.06) 0%, var(--bg) 65%);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px;
+  background: var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
 }
 #uploadOverlay.hidden{display:none}
 
 .upload-logo {
-  font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;
-  color:var(--accent);margin-bottom:4px;opacity:.8;
+  font-size:10.5px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;
+  color:var(--muted);margin-bottom:6px;opacity:.75;
 }
 .upload-title-big {
-  font-size:40px;font-weight:700;color:var(--text);
-  letter-spacing:-2px;line-height:1.1;text-wrap:balance;
+  font-size:28px;font-weight:700;color:var(--text);
+  letter-spacing:-1px;line-height:1.15;text-wrap:balance;
 }
 .upload-title-big span{color:var(--accent)}
 
 .upload-box {
-  border:1px solid rgba(34,197,94,.2);border-radius:16px;
-  padding:48px 60px;text-align:center;cursor:pointer;
-  background:rgba(34,197,94,.02);
-  transition:all .25s cubic-bezier(.4,0,.2,1);
-  max-width:520px;width:90%;
+  border:1px solid var(--border);border-radius:14px;
+  padding:36px 44px;text-align:center;cursor:pointer;
+  background:var(--card);
+  transition:border-color .2s,background .2s;
+  max-width:400px;width:90%;
 }
 .upload-box:hover,.upload-box.drag-over {
-  background:rgba(34,197,94,.05);border-color:rgba(34,197,94,.5);
-  transform:scale(1.01);box-shadow:0 0 60px rgba(34,197,94,.08);
+  background:var(--card2);border-color:rgba(34,197,94,.5);
 }
-.upload-icon{font-size:48px;margin-bottom:16px}
-.upload-h{font-size:18px;font-weight:600;color:var(--text);margin-bottom:8px}
-.upload-sub{font-size:13px;color:var(--muted);line-height:1.7}
+.upload-icon{font-size:32px;margin-bottom:10px;opacity:.85}
+.upload-h{font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px}
+.upload-sub{font-size:12px;color:var(--muted);line-height:1.6}
 .upload-btn {
-  margin-top:24px;padding:11px 32px;border-radius:8px;
-  background:var(--accent);color:var(--bg);font-weight:700;font-size:13px;
+  margin-top:18px;padding:10px 28px;border-radius:8px;
+  background:var(--accent);color:var(--bg);font-weight:700;font-size:12.5px;
   border:none;cursor:pointer;letter-spacing:.2px;font-family:inherit;
   transition:opacity .15s,transform .15s;
 }
 .upload-btn:hover{opacity:.9;transform:translateY(-1px)}
 #fileInput{display:none}
-.upload-note{font-size:10px;color:var(--muted);margin-top:10px;opacity:.6}
+.upload-note{display:none}
 .version-badge {
-  font-size:10px;font-weight:600;letter-spacing:1.5px;
-  color:var(--accent);background:rgba(34,197,94,.08);
-  border:1px solid rgba(34,197,94,.2);border-radius:20px;
-  padding:3px 10px;text-transform:uppercase;
+  font-size:9.5px;font-weight:600;letter-spacing:1.2px;
+  color:var(--muted);background:transparent;
+  border:1px solid var(--border);border-radius:20px;
+  padding:3px 9px;text-transform:uppercase;
 }
 
 /* ─── LOADING ─── */
@@ -671,22 +670,20 @@ tbody tr:hover{background:rgba(34,197,94,.06)!important}
   <div style="text-align:center">
     <div class="upload-logo">Esyasoft Smart Grid</div>
     <div class="upload-title-big">Smart Meter <span>Analytics</span></div>
-    <div style="font-size:13px;color:var(--muted);margin-top:6px">Tamil Nadu · All Networks · Communication Dashboard</div>
-    <div class="version-badge" style="margin-top:10px;display:inline-block;opacity:.5;font-size:9px">v6.0</div>
+    <div class="upload-subtitle" style="font-size:12.5px;color:var(--muted);margin-top:5px">Tamil Nadu · All Networks · Communication Dashboard</div>
   </div>
   <div class="upload-box" id="dropZone">
-    <div class="upload-icon" style="font-size:48px;margin-bottom:16px"><i data-lucide="file-spreadsheet" aria-hidden="true" style="width:52px;height:52px;vertical-align:middle;display:inline-block;margin-right:6px;stroke-width:2"></i></div>
+    <div class="upload-icon"><i data-lucide="file-spreadsheet" aria-hidden="true" style="width:32px;height:32px;vertical-align:middle;display:inline-block;stroke-width:1.75"></i></div>
     <div class="upload-h">Upload Excel File</div>
-    <div class="upload-sub">Drop <strong style="color:var(--accent)">ExcelTask3latlonginclORIGINAL.xlsx</strong> or any updated version here.<br>All analytics recompute instantly — no manual steps.</div>
+    <div class="upload-sub">Drop your sheet here or choose a file.<br>Analytics recompute instantly.</div>
     <label for="fileInput" class="upload-btn" style="cursor:pointer">Choose File</label>
     <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none">
-    <div class="upload-note">Reads: Dailycommspresent · Dailycommspast · CompanyWise · SimCompany_Summary · WD_WE_Summary · Regional_Summary · Network_Summary</div>
-    <div style="margin-top:18px;padding-top:18px;border-top:1px solid var(--border)">
-      <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px">Already have a saved analytics state?</div>
-      <label for="importStateFileInputHome" class="upload-btn" style="cursor:pointer;background:transparent;border:1px solid var(--accent);color:var(--accent);margin-top:0">📂 Import Saved State</label>
-      <input type="file" id="importStateFileInputHome" accept="application/json,.json" style="display:none" onchange="handleImportStateFile(event)">
-    </div>
   </div>
+  <div style="text-align:center">
+    <label for="importStateFileInputHome" style="cursor:pointer;font-size:12px;color:var(--muted);text-decoration:underline;text-underline-offset:3px">Have a saved analytics state? Import it</label>
+    <input type="file" id="importStateFileInputHome" accept="application/json,.json" style="display:none" onchange="handleImportStateFile(event)">
+  </div>
+  <div class="version-badge">v6.0</div>
 </div>
 
 <!-- Loading -->
@@ -3283,7 +3280,7 @@ function applyLanguage() {
 
   setText('.upload-logo', tt('uploadBrand'));
   setHTML('.upload-title-big', tt('uploadTitle'));
-  setText('#uploadOverlay [style*="font-size:13px"]', tt('uploadSubtitle'));
+  setText('.upload-subtitle', tt('uploadSubtitle'));
   setText('.version-badge', tt('version'));
   setText('.upload-h', tt('uploadHeading'));
   setHTML('.upload-sub', tt('uploadHelp'));
