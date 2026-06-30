@@ -7085,9 +7085,20 @@ function closeAllModals() {
 }
 
 function getAnalyticsSnapshot() {
+  const compressedData = {};
+  if (D) {
+    compressedData.todayTotal = D.todayTotal;
+    compressedData.todayComm = D.todayComm;
+    compressedData.todayNotComm = D.todayNotComm;
+    compressedData.todayPct = D.todayPct;
+    if (D.companies) compressedData.companies = D.companies.slice(0, 5);
+    if (D.networks) compressedData.networks = D.networks.slice(0, 5);
+    if (D.locations) compressedData.locations = D.locations.slice(0, 10);
+    if (D.sims) compressedData.sims = D.sims.slice(0, 5);
+  }
   return {
     timestamp: new Date().toISOString(),
-    data: D || {}
+    data: compressedData
   };
 }
 
@@ -7109,12 +7120,22 @@ function saveAnalyticsState() {
     snapshot: snapshot
   };
 
-  let savedStates = JSON.parse(localStorage.getItem('dashboardStates') || '[]');
-  savedStates.push(stateObj);
-  localStorage.setItem('dashboardStates', JSON.stringify(savedStates));
+  try {
+    let savedStates = JSON.parse(localStorage.getItem('dashboardStates') || '[]');
+    savedStates.push(stateObj);
 
-  alert(`✓ State "${name}" saved successfully!`);
-  toggleSaveMenu();
+    const totalSize = JSON.stringify(savedStates).length;
+    if (totalSize > 5000000) {
+      alert('⚠️ Storage limit approaching. Please delete some old states.');
+      return;
+    }
+
+    localStorage.setItem('dashboardStates', JSON.stringify(savedStates));
+    alert(`✓ State "${name}" saved successfully!`);
+    toggleSaveMenu();
+  } catch (e) {
+    alert('❌ Storage limit exceeded! Please delete some old states first.');
+  }
 }
 
 function loadSavedStates() {
@@ -7150,21 +7171,28 @@ function importState(stateId) {
     return;
   }
 
-  D = state.snapshot.data;
+  const importedData = state.snapshot.data;
+  alert(`✓ Imported state: "${state.name}"\n\nNote: This shows the summary data. Full detailed data from that date would require the original file upload.`);
 
-  alert(`✓ Imported state: "${state.name}"`);
+  if (typeof showImportedStateNotification === 'function') {
+    showImportedStateNotification(state.name, importedData);
+  }
+
   closeAllModals();
-  location.reload();
 }
 
 function deleteState(stateId) {
   if (!confirm('Are you sure you want to delete this saved state?')) return;
 
-  let savedStates = JSON.parse(localStorage.getItem('dashboardStates') || '[]');
-  savedStates = savedStates.filter(s => s.id !== stateId);
-  localStorage.setItem('dashboardStates', JSON.stringify(savedStates));
-
-  loadSavedStates();
+  try {
+    let savedStates = JSON.parse(localStorage.getItem('dashboardStates') || '[]');
+    savedStates = savedStates.filter(s => s.id !== stateId);
+    localStorage.setItem('dashboardStates', JSON.stringify(savedStates));
+    loadSavedStates();
+    alert('✓ State deleted successfully');
+  } catch (e) {
+    alert('Error deleting state: ' + e.message);
+  }
 }
 </script>
 
