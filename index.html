@@ -704,7 +704,8 @@ tbody tr:hover{background:rgba(34,197,94,.06)!important}
     <div class="live-badge"><div class="pulse"></div><span id="headerRate">—</span></div>
     <button class="export-btn" id="exportPdfBtn" onclick="exportDashboardPDF()">Export PDF</button>
     <button class="export-btn" id="saveStateBtn" onclick="toggleSaveMenu()" title="Save Dashboard Analytics State">💾 Save State</button>
-    <button class="export-btn" id="importStateBtn" onclick="toggleImportMenu()" title="Import Saved Analytics State">📂 Import State</button>
+    <button class="export-btn" id="importStateBtn" onclick="document.getElementById('importStateFileInput').click()" title="Import Saved Analytics State">📂 Import State</button>
+    <input type="file" id="importStateFileInput" accept="application/json,.json" style="display:none" onchange="handleImportStateFile(event)" />
     <div class="lang-picker-wrap" id="langPickerWrap">
       <button class="lang-trigger-btn" id="langTriggerBtn" onclick="toggleLangPicker()" aria-haspopup="true" aria-expanded="false" aria-label="Select language">
         <i data-lucide="globe" aria-hidden="true" style="width:13px;height:13px;vertical-align:middle;display:inline-block;margin-right:6px;stroke-width:2"></i><span id="langCurrentLabel">English</span> ▾
@@ -6872,17 +6873,6 @@ window.refreshIcons = _origCreateIcons;
   </div>
 </div>
 
-<!-- Import State Modal -->
-<div id="importStateModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;z-index:10000;box-shadow:var(--shadow);min-width:450px;max-width:90vw;max-height:80vh;overflow-y:auto">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-    <h2 style="font-size:16px;font-weight:700;color:var(--text);margin:0">Import Saved Analytics</h2>
-    <button onclick="toggleImportMenu()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px">✕</button>
-  </div>
-  <div id="savedStatesList" style="margin-bottom:16px">
-    <div style="text-align:center;color:var(--muted);padding:24px;font-size:13px">No saved states yet. Save one to get started!</div>
-  </div>
-</div>
-
 <!-- Modal Overlay -->
 <div id="stateModalOverlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999" onclick="closeAllModals()"></div>
 
@@ -7045,7 +7035,7 @@ chatInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') sendMessage();
 });
 
-// ===== ANALYTICS STATE MANAGEMENT =====
+// ===== ANALYTICS STATE MANAGEMENT (export/import as JSON file) =====
 function toggleSaveMenu() {
   const modal = document.getElementById('saveStateModal');
   const overlay = document.getElementById('stateModalOverlay');
@@ -7063,43 +7053,9 @@ function toggleSaveMenu() {
   }
 }
 
-function toggleImportMenu() {
-  const modal = document.getElementById('importStateModal');
-  const overlay = document.getElementById('stateModalOverlay');
-  const isVisible = modal.style.display !== 'none';
-
-  if (isVisible) {
-    modal.style.display = 'none';
-    overlay.style.display = 'none';
-  } else {
-    modal.style.display = 'block';
-    overlay.style.display = 'block';
-    loadSavedStates();
-  }
-}
-
 function closeAllModals() {
   document.getElementById('saveStateModal').style.display = 'none';
-  document.getElementById('importStateModal').style.display = 'none';
   document.getElementById('stateModalOverlay').style.display = 'none';
-}
-
-function getAnalyticsSnapshot() {
-  const compressedData = {};
-  if (D) {
-    compressedData.todayTotal = D.todayTotal;
-    compressedData.todayComm = D.todayComm;
-    compressedData.todayNotComm = D.todayNotComm;
-    compressedData.todayPct = D.todayPct;
-    if (D.companies) compressedData.companies = D.companies.slice(0, 5);
-    if (D.networks) compressedData.networks = D.networks.slice(0, 5);
-    if (D.locations) compressedData.locations = D.locations.slice(0, 10);
-    if (D.sims) compressedData.sims = D.sims.slice(0, 5);
-  }
-  return {
-    timestamp: new Date().toISOString(),
-    data: compressedData
-  };
 }
 
 function saveAnalyticsState() {
@@ -7110,89 +7066,60 @@ function saveAnalyticsState() {
     alert('Please enter a name for this analytics state');
     return;
   }
+  if (!D || Object.keys(D).length === 0) {
+    alert('No dashboard data loaded yet. Upload a file first.');
+    return;
+  }
 
-  const snapshot = getAnalyticsSnapshot();
   const stateObj = {
-    id: Date.now(),
     name: name,
     description: desc,
-    createdAt: new Date().toLocaleString(),
-    snapshot: snapshot
+    createdAt: new Date().toISOString(),
+    data: D
   };
 
-  try {
-    let savedStates = JSON.parse(localStorage.getItem('dashboardStates') || '[]');
-    savedStates.push(stateObj);
+  const json = JSON.stringify(stateObj);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const safeName = name.replace(/[^a-z0-9\-_ ]/gi, '').trim().replace(/\s+/g, '-') || 'dashboard-state';
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${safeName}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 
-    const totalSize = JSON.stringify(savedStates).length;
-    if (totalSize > 5000000) {
-      alert('⚠️ Storage limit approaching. Please delete some old states.');
-      return;
+  toggleSaveMenu();
+}
+
+function handleImportStateFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const stateObj = JSON.parse(e.target.result);
+      if (!stateObj || !stateObj.data) {
+        alert('❌ Invalid state file: missing dashboard data.');
+        return;
+      }
+
+      D = stateObj.data;
+      document.getElementById('uploadOverlay').classList.add('hidden');
+      renderDashboard();
+      initCompareDatePickers();
+      setTimeout(() => { triggerTabAnimations(); if (window.refreshIcons) window.refreshIcons(); }, 100);
+
+      alert(`✓ Imported state: "${stateObj.name || file.name}"${stateObj.createdAt ? '\nSaved on: ' + new Date(stateObj.createdAt).toLocaleString() : ''}`);
+    } catch (err) {
+      alert('❌ Failed to import state: ' + err.message);
+    } finally {
+      event.target.value = '';
     }
-
-    localStorage.setItem('dashboardStates', JSON.stringify(savedStates));
-    alert(`✓ State "${name}" saved successfully!`);
-    toggleSaveMenu();
-  } catch (e) {
-    alert('❌ Storage limit exceeded! Please delete some old states first.');
-  }
-}
-
-function loadSavedStates() {
-  const savedStates = JSON.parse(localStorage.getItem('dashboardStates') || '[]');
-  const container = document.getElementById('savedStatesList');
-
-  if (savedStates.length === 0) {
-    container.innerHTML = '<div style="text-align:center;color:var(--muted);padding:24px;font-size:13px">No saved states yet. Save one to get started!</div>';
-    return;
-  }
-
-  container.innerHTML = savedStates.map((state, idx) => `
-    <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
-        <div>
-          <div style="font-weight:600;color:var(--text);font-size:13px">${state.name}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">${state.createdAt}</div>
-        </div>
-        <button onclick="deleteState(${state.id})" style="background:none;border:none;color:var(--bad);cursor:pointer;font-size:14px;padding:4px" title="Delete">🗑️</button>
-      </div>
-      ${state.description ? `<div style="font-size:12px;color:var(--muted);margin-bottom:10px;padding:8px;background:var(--card);border-radius:6px;border-left:2px solid var(--accent)">${state.description}</div>` : ''}
-      <button onclick="importState(${state.id})" style="width:100%;padding:8px 12px;background:var(--accent);color:var(--bg);border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">Import This State</button>
-    </div>
-  `).join('');
-}
-
-function importState(stateId) {
-  const savedStates = JSON.parse(localStorage.getItem('dashboardStates') || '[]');
-  const state = savedStates.find(s => s.id === stateId);
-
-  if (!state) {
-    alert('State not found!');
-    return;
-  }
-
-  const importedData = state.snapshot.data;
-  alert(`✓ Imported state: "${state.name}"\n\nNote: This shows the summary data. Full detailed data from that date would require the original file upload.`);
-
-  if (typeof showImportedStateNotification === 'function') {
-    showImportedStateNotification(state.name, importedData);
-  }
-
-  closeAllModals();
-}
-
-function deleteState(stateId) {
-  if (!confirm('Are you sure you want to delete this saved state?')) return;
-
-  try {
-    let savedStates = JSON.parse(localStorage.getItem('dashboardStates') || '[]');
-    savedStates = savedStates.filter(s => s.id !== stateId);
-    localStorage.setItem('dashboardStates', JSON.stringify(savedStates));
-    loadSavedStates();
-    alert('✓ State deleted successfully');
-  } catch (e) {
-    alert('Error deleting state: ' + e.message);
-  }
+  };
+  reader.readAsText(file);
 }
 </script>
 
