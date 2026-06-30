@@ -681,6 +681,11 @@ tbody tr:hover{background:rgba(34,197,94,.06)!important}
     <label for="fileInput" class="upload-btn" style="cursor:pointer">Choose File</label>
     <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none">
     <div class="upload-note">Reads: Dailycommspresent · Dailycommspast · CompanyWise · SimCompany_Summary · WD_WE_Summary · Regional_Summary · Network_Summary</div>
+    <div style="margin-top:18px;padding-top:18px;border-top:1px solid var(--border)">
+      <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px">Already have a saved analytics state?</div>
+      <label for="importStateFileInputHome" class="upload-btn" style="cursor:pointer;background:transparent;border:1px solid var(--accent);color:var(--accent);margin-top:0">📂 Import Saved State</label>
+      <input type="file" id="importStateFileInputHome" accept="application/json,.json" style="display:none" onchange="handleImportStateFile(event)">
+    </div>
   </div>
 </div>
 
